@@ -50,13 +50,13 @@
     <h2>Phương án</h2>
     <div class="presets" id="presets"></div>
     <div class="grid">
-      <div><label>Giá nhà thô (đồng)</label><input type="number" id="house"><div class="hint">Giá trị căn nhà thô</div></div>
-      <div><label>Vốn tự có (đồng)</label><input type="number" id="own"><div class="hint">Tiền mặt bỏ ra ban đầu (30%)</div></div>
+      <div><label>Giá nhà thô (đồng)</label><input type="text" inputmode="numeric" id="house"><div class="hint">Giá trị căn nhà thô</div></div>
+      <div><label>Vốn tự có (đồng)</label><input type="text" inputmode="numeric" id="own"><div class="hint">Tiền mặt bỏ ra ban đầu (30%)</div></div>
       <div><label>Thời gian vay (năm)</label><input type="number" id="years"><div class="hint">Kỳ hạn khoản vay</div></div>
       <div><label>Lãi suất (%/năm)</label><input type="number" id="rate" step="0.01"><div class="hint">Lãi vay ngân hàng</div></div>
-      <div><label>Nội thất dự kiến (đồng)</label><input type="number" id="furn"></div>
-      <div><label>Tiền thuê khởi điểm (đồng/tháng)</label><input type="number" id="rent"></div>
-      <div><label>Mức tăng tiền thuê (đồng / 2 năm)</label><input type="number" id="step"><div class="hint">Cứ 2 năm tăng thêm</div></div>
+      <div><label>Nội thất dự kiến (đồng)</label><input type="text" inputmode="numeric" id="furn"></div>
+      <div><label>Tiền thuê khởi điểm (đồng/tháng)</label><input type="text" inputmode="numeric" id="rent"></div>
+      <div><label>Mức tăng tiền thuê (đồng / 2 năm)</label><input type="text" inputmode="numeric" id="step"><div class="hint">Cứ 2 năm tăng thêm</div></div>
     </div>
     <div class="note">Mô hình: 18 tháng đầu ân hạn (không trả) · tháng 19–24 trả lãi · từ tháng 25 trả gốc đều (vốn vay ÷ số kỳ) + lãi trên dư nợ giảm dần. Tính theo đúng file Excel gốc của Thầy.</div>
   </div>
@@ -100,15 +100,18 @@ const PRESETS = {
 const $ = id => document.getElementById(id);
 const fmt = n => Math.round(n).toLocaleString('vi-VN');
 const fmtTr = n => (n/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' tr';
+const MONEY = ['house','own','furn','rent','step'];
+const unformat = s => Number(String(s).replace(/[^\d]/g,'')) || 0;
+const groupDigits = n => n.toLocaleString('vi-VN');
 
 let rentScenario = 0; // 0=VI,1=VII,2=VIII
 let roiScenario = 0;
 
 function readInputs(){
   return {
-    house:+$('house').value, own:+$('own').value,
+    house:unformat($('house').value), own:unformat($('own').value),
     term:(+$('years').value)*12, annual:(+$('rate').value)/100,
-    furniture:+$('furn').value, rentBase:+$('rent').value, step:+$('step').value
+    furniture:unformat($('furn').value), rentBase:unformat($('rent').value), step:unformat($('step').value)
   };
 }
 
@@ -210,8 +213,8 @@ function refresh(){
 
 function loadPreset(name){
   const p=PRESETS[name];
-  $('house').value=p.house; $('own').value=p.own; $('years').value=p.years;
-  $('rate').value=p.rate; $('furn').value=p.furn; $('rent').value=p.rent; $('step').value=p.step;
+  $('house').value=groupDigits(p.house); $('own').value=groupDigits(p.own); $('years').value=p.years;
+  $('rate').value=p.rate; $('furn').value=groupDigits(p.furn); $('rent').value=groupDigits(p.rent); $('step').value=groupDigits(p.step);
   document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('active',b.textContent===name));
   refresh();
 }
@@ -231,7 +234,12 @@ document.querySelectorAll('#presets button').forEach(b=>{
   btn.onclick=()=>{roiScenario=i;document.querySelectorAll('#roiTabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');refresh();};
   $('roiTabs').appendChild(btn);
 });
-['house','own','years','rate','furn','rent','step'].forEach(id=>$(id).addEventListener('input',refresh));
+MONEY.forEach(id=>$(id).addEventListener('input',e=>{
+  const el=e.target; const digits=el.value.replace(/[^\d]/g,'');
+  el.value = digits ? groupDigits(Number(digits)) : '';
+  refresh();
+}));
+['years','rate'].forEach(id=>$(id).addEventListener('input',refresh));
 loadPreset('Căn 1 lầu');
 </script>
 </body>
