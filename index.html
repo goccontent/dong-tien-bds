@@ -51,7 +51,8 @@
     <div class="presets" id="presets"></div>
     <div class="grid">
       <div><label>Giá nhà thô (đồng)</label><input type="text" inputmode="numeric" id="house"><div class="hint">Giá trị căn nhà thô</div></div>
-      <div><label>Vốn tự có (đồng)</label><input type="text" inputmode="numeric" id="own"><div class="hint">Tiền mặt bỏ ra ban đầu (30%)</div></div>
+      <div><label>Tỷ lệ vốn tự có (%)</label><input type="number" id="ownpct" step="1" min="0" max="100"><div class="hint">Mặc định 30% giá nhà</div></div>
+      <div><label>Vốn tự có (đồng)</label><input type="text" id="own" readonly style="background:#efe9dc;color:#5b4522;font-weight:700"><div class="hint">Tự tính = tỷ lệ × giá nhà</div></div>
       <div><label>Thời gian vay (năm)</label><input type="number" id="years"><div class="hint">Kỳ hạn khoản vay</div></div>
       <div><label>Lãi suất (%/năm)</label><input type="number" id="rate" step="0.01"><div class="hint">Lãi vay ngân hàng</div></div>
       <div><label>Nội thất dự kiến (đồng)</label><input type="text" inputmode="numeric" id="furn"></div>
@@ -94,22 +95,31 @@
 
 <script>
 const PRESETS = {
-  'Căn 1 lầu':  {house:1900000000, own:570000000, years:20, rate:11.5, furn:400000000, rent:12000000, step:1000000},
-  'Căn 1 lửng': {house:1400000000, own:316000000, years:30, rate:11.5, furn:300000000, rent:8000000,  step:1000000},
+  'Căn 1 lầu':  {house:1900000000, ownpct:30, years:20, rate:11.5, furn:400000000, rent:12000000, step:1000000},
+  'Căn 1 lửng': {house:1400000000, ownpct:30, years:30, rate:11.5, furn:300000000, rent:8000000,  step:1000000},
 };
 const $ = id => document.getElementById(id);
 const fmt = n => isFinite(n) ? Math.round(n).toLocaleString('vi-VN') : '—';
 const fmtTr = n => (n/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' tr';
-const MONEY = ['house','own','furn','rent','step'];
+const MONEY = ['house','furn','rent','step'];
 const unformat = s => Number(String(s).replace(/[^\d]/g,'')) || 0;
 const groupDigits = n => n.toLocaleString('vi-VN');
 
 let rentScenario = 0; // 0=VI,1=VII,2=VIII
 let roiScenario = 0;
 
+function syncOwn(){
+  const house=unformat($('house').value);
+  const pct=(+$('ownpct').value)||0;
+  const own=Math.round(house*pct/100);
+  $('own').value=groupDigits(own);
+  return own;
+}
 function readInputs(){
+  const house=unformat($('house').value);
+  const own=syncOwn();
   return {
-    house:unformat($('house').value), own:unformat($('own').value),
+    house, own,
     term:(+$('years').value)*12, annual:(+$('rate').value)/100,
     furniture:unformat($('furn').value), rentBase:unformat($('rent').value), step:unformat($('step').value)
   };
@@ -213,8 +223,9 @@ function refresh(){
 
 function loadPreset(name){
   const p=PRESETS[name];
-  $('house').value=groupDigits(p.house); $('own').value=groupDigits(p.own); $('years').value=p.years;
+  $('house').value=groupDigits(p.house); $('ownpct').value=p.ownpct; $('years').value=p.years;
   $('rate').value=p.rate; $('furn').value=groupDigits(p.furn); $('rent').value=groupDigits(p.rent); $('step').value=groupDigits(p.step);
+  syncOwn();
   document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('active',b.textContent===name));
   refresh();
 }
@@ -239,7 +250,7 @@ MONEY.forEach(id=>$(id).addEventListener('input',e=>{
   el.value = digits ? groupDigits(Number(digits)) : '';
   refresh();
 }));
-['years','rate'].forEach(id=>$(id).addEventListener('input',refresh));
+['years','rate','ownpct'].forEach(id=>$(id).addEventListener('input',refresh));
 loadPreset('Căn 1 lầu');
 </script>
 </body>
