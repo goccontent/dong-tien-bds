@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dự Tính Dòng Tiền Đầu Tư BĐS — ATA</title>
+<style>
+  :root{--nau:#7a4f1d;--vang:#d99a00;--xanh:#1f7a4d;--do:#c0392b;--nen:#f6f1e7;--line:#e3d8c4;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--nen);color:#2a2118;font-size:15px;line-height:1.45}
+  header{background:linear-gradient(120deg,#7a4f1d,#a9741f);color:#fff;padding:18px 20px}
+  header h1{margin:0;font-size:20px}
+  header p{margin:4px 0 0;opacity:.9;font-size:13px}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--nau);border-bottom:2px solid var(--line);padding-bottom:6px}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .presets button{border:1px solid var(--nau);background:#fff;color:var(--nau);padding:8px 14px;border-radius:20px;cursor:pointer;font-size:14px}
+  .presets button.active{background:var(--nau);color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  label{display:block;font-size:13px;color:#6b5b40;margin-bottom:4px}
+  input[type=number]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:#fffdf8}
+  .hint{font-size:11px;color:#9a8a6a;margin-top:2px}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+  .m{background:#faf5ea;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .m .lbl{font-size:12px;color:#8a7550}
+  .m .val{font-size:19px;font-weight:700;color:var(--nau);margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:right}
+  th{background:#f0e7d4;color:#5b4522;text-align:center;font-weight:600}
+  td:first-child,th:first-child{text-align:center}
+  .pos{color:var(--xanh)} .neg{color:var(--do)}
+  .scroll{overflow-x:auto}
+  details summary{cursor:pointer;color:var(--nau);font-weight:600;padding:6px 0}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .tabs button{border:1px solid var(--line);background:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+  .tabs button.active{background:var(--vang);color:#fff;border-color:var(--vang)}
+  .note{font-size:12px;color:#8a7550;margin-top:8px}
+  @media(max-width:600px){th,td{padding:5px 4px;font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Dự Tính Dòng Tiền Đầu Tư BĐS</h1>
+  <p>Công cụ tính lãi vay dư nợ giảm dần · dòng tiền cho thuê · tỷ suất sinh lời — ATA Group</p>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h2>Phương án</h2>
+    <div class="presets" id="presets"></div>
+    <div class="grid">
+      <div><label>Giá nhà thô (đồng)</label><input type="number" id="house"><div class="hint">Giá trị căn nhà thô</div></div>
+      <div><label>Vốn tự có (đồng)</label><input type="number" id="own"><div class="hint">Tiền mặt bỏ ra ban đầu (30%)</div></div>
+      <div><label>Thời gian vay (năm)</label><input type="number" id="years"><div class="hint">Kỳ hạn khoản vay</div></div>
+      <div><label>Lãi suất (%/năm)</label><input type="number" id="rate" step="0.01"><div class="hint">Lãi vay ngân hàng</div></div>
+      <div><label>Nội thất dự kiến (đồng)</label><input type="number" id="furn"></div>
+      <div><label>Tiền thuê khởi điểm (đồng/tháng)</label><input type="number" id="rent"></div>
+      <div><label>Mức tăng tiền thuê (đồng / 2 năm)</label><input type="number" id="step"><div class="hint">Cứ 2 năm tăng thêm</div></div>
+    </div>
+    <div class="note">Mô hình: 18 tháng đầu ân hạn (không trả) · tháng 19–24 trả lãi · từ tháng 25 trả gốc đều (vốn vay ÷ số kỳ) + lãi trên dư nợ giảm dần. Tính theo đúng file Excel gốc của Thầy.</div>
+  </div>
+
+  <div class="card">
+    <h2>Tổng quan</h2>
+    <div class="metrics" id="metrics"></div>
+  </div>
+
+  <div class="card">
+    <h2>Dòng tiền cho thuê so với lãi + gốc ngân hàng (10 năm)</h2>
+    <div class="tabs" id="rentTabs"></div>
+    <div class="scroll"><table id="cfTable"></table></div>
+    <div class="note">Nguồn thu = Tiền cho thuê cả năm − (lãi + gốc phải trả cả năm). Số âm (đỏ) = giai đoạn đầu dòng tiền chưa dương, cần bù thêm.</div>
+  </div>
+
+  <div class="card">
+    <h2>Dự đoán tỷ suất sinh lời theo mức tăng tài sản</h2>
+    <div class="tabs" id="roiTabs"></div>
+    <div class="scroll"><table id="roiTable"></table></div>
+    <div class="note">Sinh lời (X) = tài sản tăng trưởng + tiền cho thuê luỹ kế − (lãi+gốc+vốn luỹ kế) − dư nợ ngân hàng. Tỷ suất = (lãi+gốc+vốn) ÷ sinh lời.</div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Bảng chi tiết kế hoạch trả vay từng tháng (240 tháng)</summary>
+      <div class="scroll" style="max-height:460px;overflow-y:auto"><table id="amortTable"></table></div>
+    </details>
+  </div>
+
+  <div class="note" style="text-align:center;padding-bottom:20px">Trang tính nội bộ ATA · số liệu chỉ mang tính dự tính tham khảo.</div>
+</div>
+
+<script>
+const PRESETS = {
+  'Căn 1 lầu':  {house:1900000000, own:570000000, years:20, rate:11.5, furn:400000000, rent:12000000, step:1000000},
+  'Căn 1 lửng': {house:1400000000, own:316000000, years:30, rate:11.5, furn:300000000, rent:8000000,  step:1000000},
+};
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('vi-VN');
+const fmtTr = n => (n/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' tr';
+
+let rentScenario = 0; // 0=VI,1=VII,2=VIII
+let roiScenario = 0;
+
+function readInputs(){
+  return {
+    house:+$('house').value, own:+$('own').value,
+    term:(+$('years').value)*12, annual:(+$('rate').value)/100,
+    furniture:+$('furn').value, rentBase:+$('rent').value, step:+$('step').value
+  };
+}
+
+function compute(inp){
+  const loan = inp.house - inp.own;
+  const mRate = inp.annual/12;
+  const N = 240;
+  const B=[],C=[],D=[],E=[],F=[],G=[],H=[],I=[];
+  for(let m=1;m<=N;m++){
+    const bal = (m===1)? loan : F[m-2];
+    const prin = (m>=25)? loan/inp.term : 0;
+    const inte = (m>=19)? bal*mRate : 0;
+    B[m-1]=bal; C[m-1]=prin; D[m-1]=inte; E[m-1]=prin+inte; F[m-1]=bal-prin;
+    const rent = inp.rentBase + inp.step*Math.floor((m-1)/24);
+    G[m-1]=rent; H[m-1]=rent+1000000; I[m-1]=rent+2000000;
+  }
+  // sum by excel month range (inclusive), month=row-85
+  const s=(arr,m1,m2)=>{let x=0;for(let m=m1;m<=m2;m++) x+=arr[m-1]; return x;};
+  const rowsB={13:[1,12],14:[12,23],15:[25,36],16:[26,37],17:[49,60],19:[61,72],20:[73,84],21:[85,96],22:[97,108],23:[109,120]};
+  const rowsC={14:[13,24],15:[25,36],16:[37,48],17:[49,60],19:[61,72],20:[73,84],21:[85,96],22:[97,108],23:[109,120]};
+  const rowsD={13:[1,12],14:[13,24],15:[25,36],16:[37,48],17:[49,60],19:[61,72],20:[73,84],21:[85,96],22:[97,108],23:[109,120]};
+  const order=[13,14,15,16,17,19,20,21,22,23];
+  const Bv={},Cv={},Dv={},Ev={},Fv={};
+  for(const r of order){
+    Bv[r]=s(G,rowsB[r][0],rowsB[r][1]);
+    Cv[r]=(r===13)? 12*(inp.rentBase+1000000) : s(H,rowsC[r][0],rowsC[r][1]);
+    Dv[r]=s(I,rowsD[r][0],rowsD[r][1]);
+    Ev[r]=s(E,rowsD[r][0],rowsD[r][1]);
+    Fv[r]=Ev[r]+inp.own;
+  }
+  // dư nợ cuối năm (balEnd) tại tháng 12,24,...120
+  const balYear={13:F[11],14:F[23],15:F[35],16:F[47],17:F[59],19:F[71],20:F[83],21:F[95],22:F[107],23:F[119]};
+  return {loan,B,C,D,E,F,G,H,I,Bv,Cv,Dv,Ev,Fv,balYear,order,inp};
+}
+
+function renderMetrics(mo){
+  const totPrin = mo.C.reduce((a,b)=>a+b,0);
+  const totInt  = mo.D.reduce((a,b)=>a+b,0);
+  const monthlyFull = mo.C[119] + mo.D[119];
+  const items=[
+    ['Số tiền vay', fmt(mo.loan)+' đ'],
+    ['Vốn tự có', fmt(mo.inp.own)+' đ'],
+    ['Tổng gốc phải trả (20 năm)', fmt(totPrin)+' đ'],
+    ['Tổng lãi phải trả (20 năm)', fmt(totInt)+' đ'],
+    ['Dư nợ còn lại sau 20 năm', fmt(mo.F[239])+' đ'],
+    ['Trả ~ tháng (năm thứ 10)', fmt(monthlyFull)+' đ']
+  ];
+  $('metrics').innerHTML = items.map(x=>`<div class="m"><div class="lbl">${x[0]}</div><div class="val">${x[1]}</div></div>`).join('');
+}
+
+function renderCashflow(mo){
+  const rentArr = rentScenario===0?mo.Bv:(rentScenario===1?mo.Cv:mo.Dv);
+  const rentColArr = rentScenario===0?mo.G:(rentScenario===1?mo.H:mo.I);
+  // yearly: use summary rows as 10 năm; nguồn thu = rent(year) - payment(year)
+  const yLabels=['1','2','3','4','5','6','7','8','9','10'];
+  let rows='';
+  mo.order.forEach((r,i)=>{
+    const rent=rentArr[r], pay=mo.Ev[r], net=rent-pay;
+    rows+=`<tr><td>${yLabels[i]}</td><td>${fmt(rent)}</td><td>${fmt(pay)}</td><td class="${net<0?'neg':'pos'}">${fmt(net)}</td></tr>`;
+  });
+  $('cfTable').innerHTML =
+    `<tr><th>Năm</th><th>Tiền cho thuê / năm</th><th>Lãi + gốc / năm</th><th>Nguồn thu (chênh lệch)</th></tr>`+rows;
+}
+
+function renderROI(mo){
+  const rentSum = roiScenario===0?mo.Bv:(roiScenario===1?mo.Cv:mo.Dv);
+  const growth=[0.15,0.3,0.5,0.6,1,1.2,1.4,1.6,1.8,2];
+  const A27=mo.inp.house;
+  let rows='';
+  mo.order.forEach((r,i)=>{
+    const g=growth[i];
+    const tang=A27*g;                 // số tiền tăng
+    const asset=A27+tang;             // tài sản tăng trưởng (IV)
+    const sinhloi = asset + rentSum[r] - mo.Fv[r] - mo.balYear[r]; // X
+    const tysuat = mo.Fv[r]!==0 ? sinhloi/mo.Fv[r] : 0;
+    rows+=`<tr><td>${i+1}</td><td>${fmt(tang)}</td><td>${(g*100).toFixed(0)}%</td><td>${fmt(asset)}</td><td>${fmt(sinhloi)}</td><td>${tysuat.toFixed(2)}</td></tr>`;
+  });
+  $('roiTable').innerHTML =
+    `<tr><th>Năm</th><th>Tài sản tăng thêm</th><th>Tỉ lệ tăng</th><th>Tài sản tăng trưởng</th><th>Sinh lời (X)</th><th>Tỷ suất LN</th></tr>`+rows;
+}
+
+function renderAmort(mo){
+  let rows='';
+  for(let m=1;m<=240;m++){
+    const rent=mo.G[m-1];
+    rows+=`<tr><td>${m}</td><td>${fmt(mo.B[m-1])}</td><td>${mo.C[m-1]?fmt(mo.C[m-1]):'—'}</td><td>${mo.D[m-1]?fmt(mo.D[m-1]):'—'}</td><td>${fmt(mo.E[m-1])}</td><td>${fmt(mo.F[m-1])}</td><td>${fmt(rent)}</td></tr>`;
+  }
+  $('amortTable').innerHTML =
+    `<tr><th>Kỳ</th><th>Nợ đầu kỳ</th><th>Trả gốc</th><th>Trả lãi</th><th>Tổng phải trả</th><th>Nợ cuối kỳ</th><th>Thuê VI/tháng</th></tr>`+rows;
+}
+
+function refresh(){
+  const mo = compute(readInputs());
+  renderMetrics(mo);
+  renderCashflow(mo);
+  renderROI(mo);
+  renderAmort(mo);
+}
+
+function loadPreset(name){
+  const p=PRESETS[name];
+  $('house').value=p.house; $('own').value=p.own; $('years').value=p.years;
+  $('rate').value=p.rate; $('furn').value=p.furn; $('rent').value=p.rent; $('step').value=p.step;
+  document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('active',b.textContent===name));
+  refresh();
+}
+
+// build UI
+$('presets').innerHTML = Object.keys(PRESETS).map(n=>`<button>${n}</button>`).join('')+'<button data-custom>Tuỳ chỉnh</button>';
+document.querySelectorAll('#presets button').forEach(b=>{
+  b.onclick=()=>{ if(b.dataset.custom!==undefined){document.querySelectorAll('#presets button').forEach(x=>x.classList.remove('active'));b.classList.add('active');} else loadPreset(b.textContent); };
+});
+['VI (khởi điểm thấp)','VII (+1tr)','VIII (+2tr)'].forEach((t,i)=>{
+  const btn=document.createElement('button');btn.textContent=t;if(i===0)btn.classList.add('active');
+  btn.onclick=()=>{rentScenario=i;document.querySelectorAll('#rentTabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');refresh();};
+  $('rentTabs').appendChild(btn);
+});
+['VI (thấp)','VII (+1tr)','VIII (+2tr)'].forEach((t,i)=>{
+  const btn=document.createElement('button');btn.textContent=t;if(i===0)btn.classList.add('active');
+  btn.onclick=()=>{roiScenario=i;document.querySelectorAll('#roiTabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');refresh();};
+  $('roiTabs').appendChild(btn);
+});
+['house','own','years','rate','furn','rent','step'].forEach(id=>$(id).addEventListener('input',refresh));
+loadPreset('Căn 1 lầu');
+</script>
+</body>
+</html>
