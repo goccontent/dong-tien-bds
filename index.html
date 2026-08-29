@@ -98,7 +98,7 @@ const PRESETS = {
   'Căn 1 lửng': {house:1400000000, own:316000000, years:30, rate:11.5, furn:300000000, rent:8000000,  step:1000000},
 };
 const $ = id => document.getElementById(id);
-const fmt = n => Math.round(n).toLocaleString('vi-VN');
+const fmt = n => isFinite(n) ? Math.round(n).toLocaleString('vi-VN') : '—';
 const fmtTr = n => (n/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' tr';
 const MONEY = ['house','own','furn','rent','step'];
 const unformat = s => Number(String(s).replace(/[^\d]/g,'')) || 0;
@@ -122,7 +122,7 @@ function compute(inp){
   const B=[],C=[],D=[],E=[],F=[],G=[],H=[],I=[];
   for(let m=1;m<=N;m++){
     const bal = (m===1)? loan : F[m-2];
-    const prin = (m>=25)? loan/inp.term : 0;
+    const prin = (m>=25 && inp.term>0)? loan/inp.term : 0;
     const inte = (m>=19)? bal*mRate : 0;
     B[m-1]=bal; C[m-1]=prin; D[m-1]=inte; E[m-1]=prin+inte; F[m-1]=bal-prin;
     const rent = inp.rentBase + inp.step*Math.floor((m-1)/24);
@@ -187,7 +187,7 @@ function renderROI(mo){
     const asset=A27+tang;             // tài sản tăng trưởng (IV)
     const sinhloi = asset + rentSum[r] - mo.Fv[r] - mo.balYear[r]; // X
     const tysuat = mo.Fv[r]!==0 ? sinhloi/mo.Fv[r] : 0;
-    rows+=`<tr><td>${i+1}</td><td>${fmt(tang)}</td><td>${(g*100).toFixed(0)}%</td><td>${fmt(asset)}</td><td>${fmt(sinhloi)}</td><td>${tysuat.toFixed(2)}</td></tr>`;
+    rows+=`<tr><td>${i+1}</td><td>${fmt(tang)}</td><td>${(g*100).toFixed(0)}%</td><td>${fmt(asset)}</td><td>${fmt(sinhloi)}</td><td>${isFinite(tysuat)?tysuat.toFixed(2):'—'}</td></tr>`;
   });
   $('roiTable').innerHTML =
     `<tr><th>Năm</th><th>Tài sản tăng thêm</th><th>Tỉ lệ tăng</th><th>Tài sản tăng trưởng</th><th>Sinh lời (X)</th><th>Tỷ suất LN</th></tr>`+rows;
