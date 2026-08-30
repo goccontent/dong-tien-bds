@@ -190,19 +190,12 @@ function compute(inp){
 }
 
 function renderMetrics(mo){
-  const totPrin = mo.C.reduce((a,b)=>a+b,0);
-  const totInt  = mo.D.reduce((a,b)=>a+b,0);
-  const monthlyFull = mo.C[119] + mo.D[119];
   const tongVonDauTu = mo.inp.own + mo.inp.furniture;
   const items=[
     ['Số tiền vay', fmt(mo.loan)+' đ'],
     ['Vốn tự có', fmt(mo.inp.own)+' đ'],
     ['Nội thất (gói đã chọn)', fmt(mo.inp.furniture)+' đ'],
-    ['Tổng vốn đầu tư ban đầu', fmt(tongVonDauTu)+' đ'],
-    ['Tổng gốc phải trả (20 năm)', fmt(totPrin)+' đ'],
-    ['Tổng lãi phải trả (20 năm)', fmt(totInt)+' đ'],
-    ['Dư nợ còn lại sau 20 năm', fmt(mo.F[239])+' đ'],
-    ['Trả ~ tháng (năm thứ 10)', fmt(monthlyFull)+' đ']
+    ['Tổng vốn đầu tư ban đầu', fmt(tongVonDauTu)+' đ']
   ];
   $('metrics').innerHTML = items.map(x=>`<div class="m"><div class="lbl">${x[0]}</div><div class="val">${x[1]}</div></div>`).join('');
 }
